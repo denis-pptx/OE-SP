@@ -183,7 +183,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int ss) {
 	HWND hw = CreateWindow(
 		L"MainWindowClass", L"Конвертер", 
 		WS_OVERLAPPEDWINDOW, 
-		0, 0, 640, 480, 
+		0, 0, 370, 280, 
 		NULL, NULL, hInst, NULL
 	);
 
