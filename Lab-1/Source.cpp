@@ -1,25 +1,17 @@
 #include <windows.h>
+#include <string>
+#include <regex>
 
-#define ID_COMBOBOX1 1
-#define ID_COMBOBOX2 2
+#include "Converters.h"
+#include "Constants.h"
 
-#define ID_EDIT1 3
-#define ID_EDIT2 4
-
-int selected_base_combobox1 = 1;
-int selected_base_combobox2 = 0;
+using namespace std;
 
 
-int combobox_index_to_base(int index) {
-    if (index == 0)
-        return 2;
 
-    if (index == 1)
-        return 10;
+int selected_index_combobox1 = 1;
+int selected_index_combobox2 = 0;
 
-    if (index == 2)
-        return 16;
-}
 
 void MainWindowAddEdits(HWND hWnd) {
     HWND hEdit1 = CreateWindow(
@@ -53,10 +45,12 @@ void MainWindowAddComboBoxes(HWND hWnd) {
         NULL,
         NULL
     );
-    SendMessage(hComboBox1, CB_ADDSTRING, 0, (LPARAM)L"2");
-    SendMessage(hComboBox1, CB_ADDSTRING, 0, (LPARAM)L"10");
-    SendMessage(hComboBox1, CB_ADDSTRING, 0, (LPARAM)L"16");
-    SendMessage(hComboBox1, CB_SETCURSEL, selected_base_combobox1, 0);
+
+    for (auto item : select_bases)
+        SendMessage(hComboBox1, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(to_wstring(item.second).c_str()));
+
+    SendMessage(hComboBox1, CB_SETCURSEL, selected_index_combobox1, 0);
+
 
 
     HWND hComboBox2 = CreateWindow(
@@ -68,10 +62,24 @@ void MainWindowAddComboBoxes(HWND hWnd) {
         NULL,
         NULL
     );
-    SendMessage(hComboBox2, CB_ADDSTRING, 0, (LPARAM)L"2");
-    SendMessage(hComboBox2, CB_ADDSTRING, 0, (LPARAM)L"10");
-    SendMessage(hComboBox2, CB_ADDSTRING, 0, (LPARAM)L"16");
-    SendMessage(hComboBox2, CB_SETCURSEL, selected_base_combobox2, 0);
+
+    for (auto item : select_bases)
+        SendMessage(hComboBox2, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(to_wstring(item.second).c_str()));
+
+    SendMessage(hComboBox2, CB_SETCURSEL, selected_index_combobox2, 0);
+}
+
+
+void MainWindowAddButtons(HWND hWnd) {
+    HWND hButton = CreateWindow(
+        L"BUTTON", L"Конвертировать",
+        WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
+        160, 150, 150, 25,
+        hWnd,
+        (HMENU)ID_BUTTON_CONVERT,
+        NULL,
+        NULL
+    );
 }
 
 
@@ -83,26 +91,64 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
     {
         MainWindowAddComboBoxes(hWnd);
         MainWindowAddEdits(hWnd);
+        MainWindowAddButtons(hWnd);
         break;
     }
 
+    // LOWORD(wParam) - Идентификатор элемента управления
+    // HIWORD(wParam) - Код уведомления, определяемый элементом управления
+    // lParam - Дескриптор окна управления
+    // https://learn.microsoft.com/ru-ru/windows/win32/menurc/wm-command
     case WM_COMMAND:
     {
         switch (LOWORD(wParam))
         {
         case ID_COMBOBOX1:
             if (HIWORD(wParam) == CBN_SELCHANGE)
-                selected_base_combobox1 = combobox_index_to_base(SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0));
+                selected_index_combobox1 = SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
             
             break;
 
         case ID_COMBOBOX2:
             if (HIWORD(wParam) == CBN_SELCHANGE)
-                selected_base_combobox2 = combobox_index_to_base(SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0));
+                selected_index_combobox2 = SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
             
             break;
-        }
+        
+        case ID_BUTTON_CONVERT:
+            if (HIWORD(wParam) == BN_CLICKED)
+            {
+                WCHAR readFirst[50];
+                GetWindowText(GetDlgItem(hWnd, ID_EDIT1), readFirst, sizeof(readFirst) / sizeof(readFirst[0]));
 
+                wstring w_inputFirst(readFirst);
+                string inputFirst = std::string(w_inputFirst.begin(), w_inputFirst.end());
+                
+                int selected_base = select_bases[selected_index_combobox1];
+                if (
+                    (selected_base == 2 && !regex_match(inputFirst, binary_pattern)) || 
+                    (selected_base == 10 && (!regex_match(inputFirst, decimal_pattern) || stoi(inputFirst) > 65535)) ||
+                    (selected_base == 16 && !regex_match(inputFirst, hexadecimal_pattern))
+                    ) 
+                {
+                    MessageBox(hWnd, L"1. Не допускаются некорректные символы.\n2. Только положительные числа.\n3. Ввод не может быть пустой. \n4. Максимальный размер: 16 бит.", L"Ошибка", MB_ICONERROR | MB_OK);
+                    SetWindowText(GetDlgItem(hWnd, ID_EDIT2), L"Некорректный ввод.");
+                }
+                else {
+                    try {
+                        string temp = baseToDecimal(inputFirst, select_bases[selected_index_combobox1]);
+                        string result = decimalToBase(temp, select_bases[selected_index_combobox2]);
+
+                        SetWindowText(GetDlgItem(hWnd, ID_EDIT2), wstring(result.begin(), result.end()).c_str());
+                    }
+                    catch (exception e) {
+                        MessageBox(hWnd, L"Ошибка конвертации.", L"Ошибка", MB_ICONERROR | MB_OK);
+                        SetWindowText(GetDlgItem(hWnd, ID_EDIT2), L"Ошибка конвертации.");
+                    }
+                }
+            }
+            break;
+        }
         break;
     }
 
