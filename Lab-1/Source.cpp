@@ -3,9 +3,6 @@
 #define ID_COMBOBOX1 1
 #define ID_COMBOBOX2 2
 
-HWND hComboBox1;
-HWND hComboBox2;
-
 int selected_base_combobox1 = 1;
 int selected_base_combobox2 = 0;
 
@@ -22,7 +19,7 @@ int combobox_index_to_base(int index) {
 }
 
 void MainWindowAddComboBoxes(HWND hWnd) {
-    hComboBox1 = CreateWindow(
+    HWND hComboBox1 = CreateWindow(
         L"COMBOBOX", L"",
         WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST,
         50, 50, 100, 200,
@@ -37,7 +34,7 @@ void MainWindowAddComboBoxes(HWND hWnd) {
     SendMessage(hComboBox1, CB_SETCURSEL, selected_base_combobox1, 0);
 
 
-    hComboBox2 = CreateWindow(
+    HWND hComboBox2 = CreateWindow(
         L"COMBOBOX", L"",
         WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST,
         50, 100, 100, 200,
@@ -69,13 +66,13 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         {
         case ID_COMBOBOX1:
             if (HIWORD(wParam) == CBN_SELCHANGE)
-                selected_base_combobox1 = combobox_index_to_base(SendMessage(hComboBox1, CB_GETCURSEL, 0, 0));
+                selected_base_combobox1 = combobox_index_to_base(SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0));
             
             break;
 
         case ID_COMBOBOX2:
             if (HIWORD(wParam) == CBN_SELCHANGE)
-                selected_base_combobox2 = combobox_index_to_base(SendMessage(hComboBox2, CB_GETCURSEL, 0, 0));
+                selected_base_combobox2 = combobox_index_to_base(SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0));
             
             break;
         }
