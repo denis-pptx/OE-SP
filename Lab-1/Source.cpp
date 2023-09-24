@@ -3,6 +3,9 @@
 #define ID_COMBOBOX1 1
 #define ID_COMBOBOX2 2
 
+#define ID_EDIT1 3
+#define ID_EDIT2 4
+
 int selected_base_combobox1 = 1;
 int selected_base_combobox2 = 0;
 
@@ -16,6 +19,28 @@ int combobox_index_to_base(int index) {
 
     if (index == 2)
         return 16;
+}
+
+void MainWindowAddEdits(HWND hWnd) {
+    HWND hEdit1 = CreateWindow(
+        L"EDIT", L"",
+        WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+        160, 50, 150, 25,
+        hWnd,
+        (HMENU)ID_EDIT1,
+        NULL,
+        NULL
+    );
+
+    HWND hEdit2 = CreateWindow(
+        L"EDIT", L"",
+        WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+        160, 100, 150, 25,
+        hWnd,
+        (HMENU)ID_EDIT2,
+        NULL,
+        NULL
+    );
 }
 
 void MainWindowAddComboBoxes(HWND hWnd) {
@@ -57,6 +82,7 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
     case WM_CREATE:
     {
         MainWindowAddComboBoxes(hWnd);
+        MainWindowAddEdits(hWnd);
         break;
     }
 
