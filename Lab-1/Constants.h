@@ -14,11 +14,7 @@ using namespace std;
 #define ID_BUTTON_CONVERT 5
 
 
-map<int, int> select_bases{
-    {0, 2},
-    {1, 10},
-    {2, 16}
-};
+int select_bases[] = { 2, 10, 16 };
 
 regex binary_pattern("^[01]{1,16}$");
 regex decimal_pattern("^[0-9]{1,5}$");

@@ -71,8 +71,8 @@ void MainWindowAddComboBoxes(HWND hWnd) {
         NULL
     );
 
-    for (auto item : select_bases)
-        SendMessage(hComboBox1, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(to_wstring(item.second).c_str()));
+    for (auto base : select_bases)
+        SendMessage(hComboBox1, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(to_wstring(base).c_str()));
 
     SendMessage(hComboBox1, CB_SETCURSEL, selected_index_combobox1, 0);
 
@@ -88,8 +88,8 @@ void MainWindowAddComboBoxes(HWND hWnd) {
         NULL
     );
 
-    for (auto item : select_bases)
-        SendMessage(hComboBox2, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(to_wstring(item.second).c_str()));
+    for (auto base : select_bases)
+        SendMessage(hComboBox2, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(to_wstring(base).c_str()));
 
     SendMessage(hComboBox2, CB_SETCURSEL, selected_index_combobox2, 0);
 }
