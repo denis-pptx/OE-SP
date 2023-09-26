@@ -86,7 +86,7 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
 
         SIZE textSize;
         GetTextExtentPoint32W(hdc, digit.c_str(), digit.length(), &textSize);
-
+        SetTextColor(hdc, RGB(0, 0, 255));
         TextOutW(hdc, textX - textSize.cx / 2, textY - textSize.cy / 2, digit.c_str(), digit.length());
 
         SetBkMode(hdc, OPAQUE);
@@ -102,7 +102,7 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
 
     // Отрисовка часовой стрелки
     int hourAngle = (hour % 12) * 30 + (minute / 2);
-    int hourLength = radius * 0.5;
+    int hourLength = radius * 0.3;
     int hx = centerX + hourLength * sin(hourAngle * M_PI / 180.0);
     int hy = centerY - hourLength * cos(hourAngle * M_PI / 180.0);
 
@@ -115,6 +115,23 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
     
     SelectObject(hdc, hOldPen);
     DeleteObject(hHourPen);
+
+
+    // Отрисовка минутной стрелки
+    int minuteAngle = minute * 6 + (second  / 10);
+    int minuteLength = radius * 0.5;
+    int mx = centerX + minuteLength * sin(minuteAngle * M_PI / 180.0);
+    int my = centerY - minuteLength * cos(minuteAngle * M_PI / 180.0);
+
+    int minutePenWidth = diameter / 150;
+    HPEN hMinutePen = CreatePen(PS_SOLID, minutePenWidth, RGB(128, 128, 128));
+    hOldPen = (HPEN)SelectObject(hdc, hMinutePen);
+
+    MoveToEx(hdc, centerX, centerY, NULL);
+    LineTo(hdc, mx, my);
+
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hMinutePen);
 }
 
 void UpdateClock(HWND hWnd) {
@@ -128,7 +145,7 @@ void UpdateClock(HWND hWnd) {
     FillRect(hdc, &clientRect, bgBrush);
     DeleteObject(bgBrush);
 
-    DrawClock(hdc, reduceRect(clientRect, 0.8), 13, 5, 15);
+    DrawClock(hdc, reduceRect(clientRect, 0.8), 13, 10, 15);
 
     ReleaseDC(hWnd, hdc);
 }
