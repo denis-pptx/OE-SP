@@ -1,7 +1,9 @@
 #define _USE_MATH_DEFINES
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <string>
 #include <string>
+#include <ctime>
 using namespace std;
 
 
@@ -119,7 +121,7 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
 
     // Отрисовка минутной стрелки
     int minuteAngle = minute * 6 + (second  / 10);
-    int minuteLength = radius * 0.5;
+    int minuteLength = radius * 0.45;
     int mx = centerX + minuteLength * sin(minuteAngle * M_PI / 180.0);
     int my = centerY - minuteLength * cos(minuteAngle * M_PI / 180.0);
 
@@ -136,7 +138,7 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
 
     // Отрисовка секундная стрелки
     int secondAngle = second * 6;
-    int secondLength = radius * 0.7;
+    int secondLength = radius * 0.6;
     int sx = centerX + secondLength * sin(secondAngle * M_PI / 180.0);
     int sy = centerY - secondLength * cos(secondAngle * M_PI / 180.0);
 
@@ -162,7 +164,12 @@ void UpdateClock(HWND hWnd) {
     FillRect(hdc, &clientRect, bgBrush);
     DeleteObject(bgBrush);
 
-    DrawClock(hdc, reduceRect(clientRect, 0.8), 13, 10, 15);
+    // Текущее UTC время
+    time_t now = time(0);
+    tm* localtm = localtime(&now);
+    tm* gmtm = gmtime(&now);
+    
+    DrawClock(hdc, reduceRect(clientRect, 0.8), gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
 
     ReleaseDC(hWnd, hdc);
 }
@@ -186,17 +193,18 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
         return EXIT_FAILURE;
 
     // Создание главного окна
-    HWND hw = CreateWindow(
+    HWND hWnd = CreateWindow(
         L"MainWindowClass", L"Clock",
         WS_OVERLAPPEDWINDOW,
         0, 0, 500, 500,
         NULL, NULL, hInst, NULL
     );
 
-    if (!hw)
+    if (!hWnd)
         return EXIT_FAILURE;
 
-    ShowWindow(hw, ss);
+    ShowWindow(hWnd, ss);
+    SetTimer(hWnd, NULL, 1000, NULL);
 
     // Цикл обработки сообщений
     MSG msg;
@@ -225,6 +233,10 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         MINMAXINFO* minsize = (MINMAXINFO*)lParam;
         minsize->ptMinTrackSize.x = 400;
         minsize->ptMinTrackSize.y = 400;
+        break;
+    }
+    case WM_TIMER: {
+        UpdateClock(hWnd);
         break;
     }
     case WM_DESTROY:
