@@ -132,6 +132,23 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
 
     SelectObject(hdc, hOldPen);
     DeleteObject(hMinutePen);
+
+
+    // Отрисовка секундная стрелки
+    int secondAngle = second * 6;
+    int secondLength = radius * 0.7;
+    int sx = centerX + secondLength * sin(secondAngle * M_PI / 180.0);
+    int sy = centerY - secondLength * cos(secondAngle * M_PI / 180.0);
+
+    int secondPenWidth = diameter / 200;
+    HPEN hSecondPen = CreatePen(PS_SOLID, minutePenWidth, RGB(255, 0, 0));
+    hOldPen = (HPEN)SelectObject(hdc, hSecondPen);
+
+    MoveToEx(hdc, centerX, centerY, NULL);
+    LineTo(hdc, sx, sy);
+
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hSecondPen);
 }
 
 void UpdateClock(HWND hWnd) {
