@@ -33,21 +33,23 @@ RECT reduceRect(RECT rect, const double alpha) {
     return result;
 }
 
-void DrawClock(HDC hdc, RECT clientRect, int hour, int minute, int second) {
+void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
     // Вычисление в соответствии с размером окна
-    int width = clientRect.right - clientRect.left;
-    int height = clientRect.bottom - clientRect.top;
+    int width = rect.right - rect.left;
+    int height = rect.bottom - rect.top;
 
     int diameter = min(width, height);
+    int centerX = rect.left + diameter / 2;
+    int centerY = rect.top + diameter / 2;
 
-    // Отрисовка эллписа
+
+    // Отрисовка большого круга
     int penWidth = diameter / 100;
     HPEN hPen = CreatePen(PS_SOLID, penWidth, RGB(0, 0, 0));
     HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
 
-    Ellipse(hdc, clientRect.left, clientRect.top, clientRect.left + diameter, clientRect.top + diameter);
+    Ellipse(hdc, rect.left, rect.top, rect.left + diameter, rect.top + diameter);
 
-    
 
     // Установка размера шрифта в зависимости от диаметра
     int fontSize = diameter / 10; 
@@ -61,8 +63,8 @@ void DrawClock(HDC hdc, RECT clientRect, int hour, int minute, int second) {
         double angle = i * (360.0 / 12.0);
         double radian = angle * M_PI / 180.0;
 
-        int textX = clientRect.left + (diameter / 2) + ((diameter / 2) * sin(radian));
-        int textY = clientRect.top + (diameter / 2) - ((diameter / 2) * cos(radian));
+        int textX = centerX + ((diameter / 2) * sin(radian));
+        int textY = centerY - ((diameter / 2) * cos(radian));
 
         // Создание кисти для заливки окружности
         HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255));
@@ -96,6 +98,8 @@ void DrawClock(HDC hdc, RECT clientRect, int hour, int minute, int second) {
     // Восстановление предыдущего шрифта
     SelectObject(hdc, hOldFont);
     DeleteObject(hFont);
+
+
 }
 
 void UpdateClock(HWND hWnd) {
@@ -109,7 +113,7 @@ void UpdateClock(HWND hWnd) {
     FillRect(hdc, &clientRect, bgBrush);
     DeleteObject(bgBrush);
 
-    DrawClock(hdc, reduceRect(clientRect, 0.8), 0, 0, 0);
+    DrawClock(hdc, reduceRect(clientRect, 0.8), 13, 5, 15);
 
     ReleaseDC(hWnd, hdc);
 }
@@ -168,7 +172,12 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         UpdateClock(hWnd);
         break;
     }
-    
+    case WM_GETMINMAXINFO: {
+        MINMAXINFO* minsize = (MINMAXINFO*)lParam;
+        minsize->ptMinTrackSize.x = 400;
+        minsize->ptMinTrackSize.y = 400;
+        break;
+    }
     case WM_DESTROY:
     {
         PostQuitMessage(0);
