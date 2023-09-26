@@ -32,11 +32,21 @@ RECT reduceRect(RECT rect, const double alpha) {
 }
 
 void DrawClock(HDC hdc, RECT clientRect, int hour, int minute, int second) {
+    // Вычисление в соответствии с размером окна
     int width = clientRect.right - clientRect.left;
     int height = clientRect.bottom - clientRect.top;
 
     int diameter = min(width, height);
+
+    // Отрисовка эллписа
+    int penWidth = diameter / 100;
+    HPEN hPen = CreatePen(PS_SOLID, penWidth, RGB(0, 0, 0));
+    HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+
     Ellipse(hdc, clientRect.left, clientRect.top, clientRect.left + diameter, clientRect.top + diameter);
+
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hPen);
 }
 
 void UpdateClock(HWND hWnd) {
@@ -75,7 +85,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
 
     // Создание главного окна
     HWND hw = CreateWindow(
-        L"MainWindowClass", L"Часы",
+        L"MainWindowClass", L"Clock",
         WS_OVERLAPPEDWINDOW,
         0, 0, 500, 500,
         NULL, NULL, hInst, NULL
