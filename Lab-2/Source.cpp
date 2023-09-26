@@ -1,9 +1,11 @@
+#define _USE_MATH_DEFINES
 #include <windows.h>
+#include <string>
 #include <string>
 using namespace std;
 
 
-#include <string>
+
 
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -45,8 +47,55 @@ void DrawClock(HDC hdc, RECT clientRect, int hour, int minute, int second) {
 
     Ellipse(hdc, clientRect.left, clientRect.top, clientRect.left + diameter, clientRect.top + diameter);
 
+    
+
+    // Установка размера шрифта в зависимости от диаметра
+    int fontSize = diameter / 10; 
+    HFONT hFont = CreateFont(fontSize, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+        OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Arial");
+    HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
+
+    // Рисование цифр
+    for (int i = 1; i <= 12; i++) {
+        // Расчет координаты (x, y) для цифры
+        double angle = i * (360.0 / 12.0);
+        double radian = angle * M_PI / 180.0;
+
+        int textX = clientRect.left + (diameter / 2) + ((diameter / 2) * sin(radian));
+        int textY = clientRect.top + (diameter / 2) - ((diameter / 2) * cos(radian));
+
+        // Создание кисти для заливки окружности
+        HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255));
+        HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush); 
+
+        // Отрисовка окружности для цифры
+        int radius = diameter * 0.08; 
+        Ellipse(hdc, textX - radius, textY - radius, textX + radius, textY + radius); 
+
+        // Восстановка предыдущей кисти
+        SelectObject(hdc, hOldBrush); 
+        DeleteObject(hBrush); 
+
+        // Отрисовка цифры
+        SetBkMode(hdc, TRANSPARENT);
+
+        wstring digit = to_wstring(i);
+
+        SIZE textSize;
+        GetTextExtentPoint32W(hdc, digit.c_str(), digit.length(), &textSize);
+
+        TextOutW(hdc, textX - textSize.cx / 2, textY - textSize.cy / 2, digit.c_str(), digit.length());
+
+        SetBkMode(hdc, OPAQUE);
+    }
+
+    // Восстановление предыдущего пера
     SelectObject(hdc, hOldPen);
     DeleteObject(hPen);
+
+    // Восстановление предыдущего шрифта
+    SelectObject(hdc, hOldFont);
+    DeleteObject(hFont);
 }
 
 void UpdateClock(HWND hWnd) {
@@ -60,7 +109,7 @@ void UpdateClock(HWND hWnd) {
     FillRect(hdc, &clientRect, bgBrush);
     DeleteObject(bgBrush);
 
-    DrawClock(hdc, reduceRect(clientRect, 0.9), 0, 0, 0);
+    DrawClock(hdc, reduceRect(clientRect, 0.8), 0, 0, 0);
 
     ReleaseDC(hWnd, hdc);
 }
@@ -119,9 +168,12 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         UpdateClock(hWnd);
         break;
     }
+    
     case WM_DESTROY:
+    {
         PostQuitMessage(0);
         break;
+    }
     }
 
     return DefWindowProc(hWnd, msg, wParam, lParam);
