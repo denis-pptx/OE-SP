@@ -39,6 +39,7 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
     int height = rect.bottom - rect.top;
 
     int diameter = min(width, height);
+    int radius = diameter / 2;
     int centerX = rect.left + diameter / 2;
     int centerY = rect.top + diameter / 2;
 
@@ -63,8 +64,8 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
         double angle = i * (360.0 / 12.0);
         double radian = angle * M_PI / 180.0;
 
-        int textX = centerX + ((diameter / 2) * sin(radian));
-        int textY = centerY - ((diameter / 2) * cos(radian));
+        int textX = centerX + (radius * sin(radian));
+        int textY = centerY - (radius * cos(radian));
 
         // Создание кисти для заливки окружности
         HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255));
@@ -99,7 +100,21 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
     SelectObject(hdc, hOldFont);
     DeleteObject(hFont);
 
+    // Отрисовка часовой стрелки
+    int hourAngle = (hour % 12) * 30 + (minute / 2);
+    int hourLength = radius * 0.5;
+    int hx = centerX + hourLength * sin(hourAngle * M_PI / 180.0);
+    int hy = centerY - hourLength * cos(hourAngle * M_PI / 180.0);
 
+    int hourPenWidth = diameter / 100;
+    HPEN hHourPen = CreatePen(PS_SOLID, hourPenWidth, RGB(0, 0, 0));
+    hOldPen = (HPEN)SelectObject(hdc, hHourPen);
+
+    MoveToEx(hdc, centerX, centerY, NULL);
+    LineTo(hdc, hx, hy);
+    
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hHourPen);
 }
 
 void UpdateClock(HWND hWnd) {
