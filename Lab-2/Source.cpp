@@ -5,226 +5,22 @@
 #include <string>
 #include <ctime>
 #include <map>
-#include <mmsystem.h>
 #include <thread>
+#include "Constants.h"
 using namespace std;
 
 
-
 int utc_offset = 3;
-wstring BASE_TITLE = L"Clock | UTC";
 
-map<int, wstring> TIME_ZONE_MAP = {
-       {-11, L"Midway Island"},
-       {-10, L"Honolulu"},
-       {-9, L"Anchorage"},
-       {-8, L"Los Angeles"},
-       {-7, L"Denver"},
-       {-6, L"Chicago"},
-       {-5, L"New York"},
-       {-4, L"Caracas"},
-       {-3, L"Buenos Aires"},
-       {-2, L"South Georgia"},
-       {-1, L"Azores"},
-       {0, L"London"},
-       {1, L"Paris"},
-       {2, L"Athens"},
-       {3, L"Minsk"},
-       {4, L"Kabul"},
-       {5, L"Islamabad"},
-       {6, L"Almaty"},
-       {7, L"Bangkok"},
-       {8, L"Beijing"},
-       {9, L"Tokyo"},
-       {10, L"Sydney"},
-       {11, L"Solomon Islands"},
-       {12, L"Suva"}
-};
 
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+void PlaySoundAsync(wstring soundFile);
 
-void PlaySoundAsync(wstring soundFile) {
-    PlaySound(soundFile.c_str(), NULL, SND_FILENAME);
-}
+RECT reduceRect(RECT rect, const double alpha);
+void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second);
+void DisplayTimeZone(HWND hWnd);
+void UpdateClock(HWND hWnd);
 
-RECT reduceRect(RECT rect, const double alpha) {
-    RECT result;
-
-    // Исходные размеры
-    int width = rect.right - rect.left;
-    int height = rect.bottom - rect.top;
-
-    // Новые размеры
-    int newWidth = (int)(width * alpha);
-    int newHeight = (int)(height * alpha);
-
-    // Смещение по X и Y для центрирования уменьшенного прямоугольника
-    int xOffset = (width - newWidth) / 2;
-    int yOffset = (height - newHeight) / 2;
-
-    // Новые координаты всех границ прямоугольника
-    result.left = rect.left + xOffset;
-    result.top = rect.top + yOffset;
-    result.right = result.left + newWidth;
-    result.bottom = result.top + newHeight;
-
-    return result;
-}
-
-void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
-    // Вычисление в соответствии с размером окна
-    int width = rect.right - rect.left;
-    int height = rect.bottom - rect.top;
-
-    int diameter = min(width, height);
-    int radius = diameter / 2;
-    int centerX = rect.left + diameter / 2;
-    int centerY = rect.top + diameter / 2;
-
-
-    // Отрисовка большого круга
-    int penWidth = diameter / 100;
-    HPEN hPen = CreatePen(PS_SOLID, penWidth, RGB(0, 0, 0));
-    HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
-
-    Ellipse(hdc, rect.left, rect.top, rect.left + diameter, rect.top + diameter);
-
-
-    // Установка размера шрифта в зависимости от диаметра
-    int fontSize = diameter / 10; 
-    HFONT hFont = CreateFont(fontSize, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
-        OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Arial");
-    HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
-
-    // Рисование цифр
-    for (int i = 1; i <= 12; i++) {
-        // Расчет координаты (x, y) для цифры
-        double angle = i * (360.0 / 12.0);
-        double radian = angle * M_PI / 180.0;
-
-        int textX = centerX + (radius * sin(radian));
-        int textY = centerY - (radius * cos(radian));
-
-        // Создание кисти для заливки окружности
-        HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255));
-        HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush); 
-
-        // Отрисовка окружности для цифры
-        int radius = diameter * 0.08; 
-        Ellipse(hdc, textX - radius, textY - radius, textX + radius, textY + radius); 
-
-        // Восстановка предыдущей кисти
-        SelectObject(hdc, hOldBrush); 
-        DeleteObject(hBrush); 
-
-        // Отрисовка цифры
-        SetBkMode(hdc, TRANSPARENT);
-
-        wstring digit = to_wstring(i);
-
-        SIZE textSize;
-        GetTextExtentPoint32W(hdc, digit.c_str(), digit.length(), &textSize);
-        SetTextColor(hdc, RGB(0, 0, 255));
-        TextOutW(hdc, textX - textSize.cx / 2, textY - textSize.cy / 2, digit.c_str(), digit.length());
-
-        SetBkMode(hdc, OPAQUE);
-    }
-
-    // Восстановление предыдущего пера
-    SelectObject(hdc, hOldPen);
-    DeleteObject(hPen);
-
-    // Восстановление предыдущего шрифта
-    SelectObject(hdc, hOldFont);
-    DeleteObject(hFont);
-
-    // Отрисовка часовой стрелки
-    int hourAngle = (hour % 12) * 30 + (minute / 2);
-    int hourLength = radius * 0.3;
-    int hx = centerX + hourLength * sin(hourAngle * M_PI / 180.0);
-    int hy = centerY - hourLength * cos(hourAngle * M_PI / 180.0);
-
-    int hourPenWidth = diameter / 100;
-    HPEN hHourPen = CreatePen(PS_SOLID, hourPenWidth, RGB(0, 0, 0));
-    hOldPen = (HPEN)SelectObject(hdc, hHourPen);
-
-    MoveToEx(hdc, centerX, centerY, NULL);
-    LineTo(hdc, hx, hy);
-    
-    SelectObject(hdc, hOldPen);
-    DeleteObject(hHourPen);
-
-
-    // Отрисовка минутной стрелки
-    int minuteAngle = minute * 6 + (second  / 10);
-    int minuteLength = radius * 0.45;
-    int mx = centerX + minuteLength * sin(minuteAngle * M_PI / 180.0);
-    int my = centerY - minuteLength * cos(minuteAngle * M_PI / 180.0);
-
-    int minutePenWidth = diameter / 150;
-    HPEN hMinutePen = CreatePen(PS_SOLID, minutePenWidth, RGB(128, 128, 128));
-    hOldPen = (HPEN)SelectObject(hdc, hMinutePen);
-
-    MoveToEx(hdc, centerX, centerY, NULL);
-    LineTo(hdc, mx, my);
-
-    SelectObject(hdc, hOldPen);
-    DeleteObject(hMinutePen);
-
-
-    // Отрисовка секунднрй стрелки
-    int secondAngle = second * 6;
-    int secondLength = radius * 0.55;
-    int sx = centerX + secondLength * sin(secondAngle * M_PI / 180.0);
-    int sy = centerY - secondLength * cos(secondAngle * M_PI / 180.0);
-
-    int secondPenWidth = diameter / 200;
-    HPEN hSecondPen = CreatePen(PS_SOLID, secondPenWidth, RGB(255, 0, 0));
-    hOldPen = (HPEN)SelectObject(hdc, hSecondPen);
-
-    MoveToEx(hdc, centerX, centerY, NULL);
-    LineTo(hdc, sx, sy);
-
-    SelectObject(hdc, hOldPen);
-    DeleteObject(hSecondPen);
-}
-
-void DisplayTimeZone(HWND hWnd) {
-
-    wstring new_title = BASE_TITLE;
-    if (utc_offset < 0) 
-        new_title += to_wstring(utc_offset);
-    else if (utc_offset > 0) 
-        new_title += L"+" + to_wstring(utc_offset);
-   
-    new_title += L" | " + TIME_ZONE_MAP[utc_offset];
-    SetWindowText(hWnd, new_title.c_str());
-}
-
-void UpdateClock(HWND hWnd) {
-    HDC hdc = GetDC(hWnd);
-
-    RECT clientRect;
-    GetClientRect(hWnd, &clientRect);
-
-    // Закрашиваем всю область окна фоновым цветом
-    HBRUSH bgBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
-    FillRect(hdc, &clientRect, bgBrush);
-    DeleteObject(bgBrush);
-
-    // Текущее UTC время
-    time_t now = time(0);
-    tm* localtm = localtime(&now);
-    tm* gmtm = gmtime(&now);
-    
-    // Отрисовка часов
-    DrawClock(hdc, reduceRect(clientRect, 0.8), gmtm->tm_hour + utc_offset , gmtm->tm_min, gmtm->tm_sec);
-    
-    // Вывод пояса в заголовок окна
-    DisplayTimeZone(hWnd);
-
-    ReleaseDC(hWnd, hdc);
-}
 
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
@@ -334,4 +130,193 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
     }
 
     return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+void PlaySoundAsync(wstring soundFile) {
+    PlaySound(soundFile.c_str(), NULL, SND_FILENAME);
+}
+
+// Уменьшить прямоугольик отрисовки
+RECT reduceRect(RECT rect, const double alpha) {
+    RECT result;
+
+    // Исходные размеры
+    int width = rect.right - rect.left;
+    int height = rect.bottom - rect.top;
+
+    // Новые размеры
+    int newWidth = (int)(width * alpha);
+    int newHeight = (int)(height * alpha);
+
+    // Смещение по X и Y для центрирования уменьшенного прямоугольника
+    int xOffset = (width - newWidth) / 2;
+    int yOffset = (height - newHeight) / 2;
+
+    // Новые координаты всех границ прямоугольника
+    result.left = rect.left + xOffset;
+    result.top = rect.top + yOffset;
+    result.right = result.left + newWidth;
+    result.bottom = result.top + newHeight;
+
+    return result;
+}
+
+// Отрисовка часов
+void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
+    // Вычисление в соответствии с размером окна
+    int width = rect.right - rect.left;
+    int height = rect.bottom - rect.top;
+
+    int diameter = min(width, height);
+    int radius = diameter / 2;
+    int centerX = rect.left + diameter / 2;
+    int centerY = rect.top + diameter / 2;
+
+
+    // Отрисовка большого круга
+    int penWidth = diameter / 100;
+    HPEN hPen = CreatePen(PS_SOLID, penWidth, RGB(0, 0, 0));
+    HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+
+    Ellipse(hdc, rect.left, rect.top, rect.left + diameter, rect.top + diameter);
+
+
+    // Установка размера шрифта в зависимости от диаметра
+    int fontSize = diameter / 10;
+    HFONT hFont = CreateFont(fontSize, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+        OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Arial");
+    HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
+
+    // Рисование цифр
+    for (int i = 1; i <= 12; i++) {
+        // Расчет координаты (x, y) для цифры
+        double angle = i * (360.0 / 12.0);
+        double radian = angle * M_PI / 180.0;
+
+        int textX = centerX + (radius * sin(radian));
+        int textY = centerY - (radius * cos(radian));
+
+        // Создание кисти для заливки окружности
+        HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255));
+        HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+
+        // Отрисовка окружности для цифры
+        int radius = diameter * 0.08;
+        Ellipse(hdc, textX - radius, textY - radius, textX + radius, textY + radius);
+
+        // Восстановка предыдущей кисти
+        SelectObject(hdc, hOldBrush);
+        DeleteObject(hBrush);
+
+        // Отрисовка цифры
+        SetBkMode(hdc, TRANSPARENT);
+
+        wstring digit = to_wstring(i);
+
+        SIZE textSize;
+        GetTextExtentPoint32W(hdc, digit.c_str(), digit.length(), &textSize);
+        SetTextColor(hdc, RGB(0, 0, 255));
+        TextOutW(hdc, textX - textSize.cx / 2, textY - textSize.cy / 2, digit.c_str(), digit.length());
+
+        SetBkMode(hdc, OPAQUE);
+    }
+
+    // Восстановление предыдущего пера
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hPen);
+
+    // Восстановление предыдущего шрифта
+    SelectObject(hdc, hOldFont);
+    DeleteObject(hFont);
+
+    // Отрисовка часовой стрелки
+    int hourAngle = (hour % 12) * 30 + (minute / 2);
+    int hourLength = radius * 0.3;
+    int hx = centerX + hourLength * sin(hourAngle * M_PI / 180.0);
+    int hy = centerY - hourLength * cos(hourAngle * M_PI / 180.0);
+
+    int hourPenWidth = diameter / 100;
+    HPEN hHourPen = CreatePen(PS_SOLID, hourPenWidth, RGB(0, 0, 0));
+    hOldPen = (HPEN)SelectObject(hdc, hHourPen);
+
+    MoveToEx(hdc, centerX, centerY, NULL);
+    LineTo(hdc, hx, hy);
+
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hHourPen);
+
+
+    // Отрисовка минутной стрелки
+    int minuteAngle = minute * 6 + (second / 10);
+    int minuteLength = radius * 0.45;
+    int mx = centerX + minuteLength * sin(minuteAngle * M_PI / 180.0);
+    int my = centerY - minuteLength * cos(minuteAngle * M_PI / 180.0);
+
+    int minutePenWidth = diameter / 150;
+    HPEN hMinutePen = CreatePen(PS_SOLID, minutePenWidth, RGB(128, 128, 128));
+    hOldPen = (HPEN)SelectObject(hdc, hMinutePen);
+
+    MoveToEx(hdc, centerX, centerY, NULL);
+    LineTo(hdc, mx, my);
+
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hMinutePen);
+
+
+    // Отрисовка секунднрй стрелки
+    int secondAngle = second * 6;
+    int secondLength = radius * 0.55;
+    int sx = centerX + secondLength * sin(secondAngle * M_PI / 180.0);
+    int sy = centerY - secondLength * cos(secondAngle * M_PI / 180.0);
+
+    int secondPenWidth = diameter / 200;
+    HPEN hSecondPen = CreatePen(PS_SOLID, secondPenWidth, RGB(255, 0, 0));
+    hOldPen = (HPEN)SelectObject(hdc, hSecondPen);
+
+    MoveToEx(hdc, centerX, centerY, NULL);
+    LineTo(hdc, sx, sy);
+
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hSecondPen);
+}
+
+
+// Отображение тайм зоны (в title окна)
+void DisplayTimeZone(HWND hWnd) {
+
+    wstring new_title = BASE_TITLE;
+    if (utc_offset < 0)
+        new_title += to_wstring(utc_offset);
+    else if (utc_offset > 0)
+        new_title += L"+" + to_wstring(utc_offset);
+
+    new_title += L" | " + TIME_ZONE_MAP[utc_offset];
+    SetWindowText(hWnd, new_title.c_str());
+}
+
+
+// Обновить часы
+void UpdateClock(HWND hWnd) {
+    HDC hdc = GetDC(hWnd);
+
+    RECT clientRect;
+    GetClientRect(hWnd, &clientRect);
+
+    // Закрашиваем всю область окна фоновым цветом
+    HBRUSH bgBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+    FillRect(hdc, &clientRect, bgBrush);
+    DeleteObject(bgBrush);
+
+    // Текущее UTC время
+    time_t now = time(0);
+    tm* localtm = localtime(&now);
+    tm* gmtm = gmtime(&now);
+
+    // Отрисовка часов
+    DrawClock(hdc, reduceRect(clientRect, 0.8), gmtm->tm_hour + utc_offset, gmtm->tm_min, gmtm->tm_sec);
+
+    // Вывод пояса в заголовок окна
+    DisplayTimeZone(hWnd);
+
+    ReleaseDC(hWnd, hdc);
 }
