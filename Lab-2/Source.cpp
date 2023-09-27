@@ -8,6 +8,7 @@ using namespace std;
 
 
 
+int utc_offset = 0;
 
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -169,7 +170,7 @@ void UpdateClock(HWND hWnd) {
     tm* localtm = localtime(&now);
     tm* gmtm = gmtime(&now);
     
-    DrawClock(hdc, reduceRect(clientRect, 0.8), gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
+    DrawClock(hdc, reduceRect(clientRect, 0.8), gmtm->tm_hour + utc_offset , gmtm->tm_min, gmtm->tm_sec);
 
     ReleaseDC(hWnd, hdc);
 }
@@ -239,6 +240,19 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         UpdateClock(hWnd);
         break;
     }
+    case WM_KEYDOWN:
+        switch (wParam) {
+        case VK_LEFT:
+            utc_offset -= 1;
+            UpdateClock(hWnd);
+            break;
+
+        case VK_RIGHT:
+            utc_offset += 1;
+            UpdateClock(hWnd);
+            break;
+        }
+        break;
     case WM_DESTROY:
     {
         PostQuitMessage(0);
