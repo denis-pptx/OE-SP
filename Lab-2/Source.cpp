@@ -231,7 +231,7 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
 
     // Отрисовка часовой стрелки
     int hourAngle = (hour % 12) * 30 + (minute / 2);
-    int hourLength = radius * 0.3;
+    int hourLength = radius * 0.25;
     int hx = centerX + hourLength * sin(hourAngle * M_PI / 180.0);
     int hy = centerY - hourLength * cos(hourAngle * M_PI / 180.0);
 
@@ -278,6 +278,17 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
 
     SelectObject(hdc, hOldPen);
     DeleteObject(hSecondPen);
+
+
+    // Отрисовка круга в центре часов
+    HBRUSH hBrush = CreateSolidBrush(RGB(0, 0, 0));
+    HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+
+    int r = radius / 30;
+    Ellipse(hdc, centerX - r, centerY - r, centerX + r, centerY + r);
+
+    SelectObject(hdc, hOldBrush);
+    DeleteObject(hBrush);
 }
 
 
