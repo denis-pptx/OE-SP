@@ -215,7 +215,7 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
 
         SIZE textSize;
         GetTextExtentPoint32W(hdc, digit.c_str(), digit.length(), &textSize);
-        SetTextColor(hdc, RGB(0, 0, 255));
+        SetTextColor(hdc, RGB((i * 25) % 256, (i * 45) % 256, (i * 65) % 256));
         TextOutW(hdc, textX - textSize.cx / 2, textY - textSize.cy / 2, digit.c_str(), digit.length());
 
         SetBkMode(hdc, OPAQUE);
