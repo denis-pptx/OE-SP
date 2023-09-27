@@ -5,6 +5,8 @@
 #include <string>
 #include <ctime>
 #include <map>
+#include <mmsystem.h>
+#include <thread>
 using namespace std;
 
 
@@ -40,6 +42,10 @@ map<int, wstring> TIME_ZONE_MAP = {
 };
 
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+void PlaySoundAsync(wstring soundFile) {
+    PlaySound(soundFile.c_str(), NULL, SND_FILENAME);
+}
 
 RECT reduceRect(RECT rect, const double alpha) {
     RECT result;
@@ -213,7 +219,7 @@ void UpdateClock(HWND hWnd) {
     
     // Отрисовка часов
     DrawClock(hdc, reduceRect(clientRect, 0.8), gmtm->tm_hour + utc_offset , gmtm->tm_min, gmtm->tm_sec);
-
+    
     // Вывод пояса в заголовок окна
     DisplayTimeZone(hWnd);
 
@@ -306,8 +312,13 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 UpdateClock(hWnd);
             }
             break;
-        }
 
+        case VK_SPACE:
+            thread soundThread(PlaySoundAsync, L"audio/kukushka.wav");
+            soundThread.detach();
+            break;
+        }
+        
         break;
     case WM_DESTROY:
     {
