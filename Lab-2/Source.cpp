@@ -8,7 +8,8 @@ using namespace std;
 
 
 
-int utc_offset = 0;
+int utc_offset = 3;
+wstring BASE_TITLE = L"Clock | UTC";
 
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -154,6 +155,17 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
     DeleteObject(hSecondPen);
 }
 
+void DisplayTimeZone(HWND hWnd) {
+
+    wstring new_title = BASE_TITLE;
+    if (utc_offset < 0) 
+        new_title += to_wstring(utc_offset);
+    else if (utc_offset > 0) 
+        new_title += L"+" + to_wstring(utc_offset);
+   
+    SetWindowText(hWnd, new_title.c_str());
+}
+
 void UpdateClock(HWND hWnd) {
     HDC hdc = GetDC(hWnd);
 
@@ -170,7 +182,11 @@ void UpdateClock(HWND hWnd) {
     tm* localtm = localtime(&now);
     tm* gmtm = gmtime(&now);
     
+    // Отрисовка часов
     DrawClock(hdc, reduceRect(clientRect, 0.8), gmtm->tm_hour + utc_offset , gmtm->tm_min, gmtm->tm_sec);
+
+    // Вывод пояса в заголовок окна
+    DisplayTimeZone(hWnd);
 
     ReleaseDC(hWnd, hdc);
 }
@@ -243,15 +259,26 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
     case WM_KEYDOWN:
         switch (wParam) {
         case VK_LEFT:
-            utc_offset -= 1;
-            UpdateClock(hWnd);
+            if (utc_offset == -11) {
+                MessageBox(NULL, L"Minimum time zone: UTC-11", L"Warning", MB_ICONWARNING | MB_OK);
+            }
+            else {
+                utc_offset -= 1;
+                UpdateClock(hWnd);
+            }
             break;
 
         case VK_RIGHT:
-            utc_offset += 1;
-            UpdateClock(hWnd);
+            if (utc_offset == 12) {
+                MessageBox(NULL, L"Maximum time zone: UTC+12", L"Warning", MB_ICONWARNING | MB_OK);
+            }
+            else {
+                utc_offset += 1;
+                UpdateClock(hWnd);
+            }
             break;
         }
+
         break;
     case WM_DESTROY:
     {
