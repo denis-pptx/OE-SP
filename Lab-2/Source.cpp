@@ -10,10 +10,13 @@
 using namespace std;
 
 
-int utc_offset = 3;
+int utcOffset = 3;
+HHOOK keyboardHook;
 
 
+LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 void PlaySoundAsync(wstring soundFile);
 
 RECT reduceRect(RECT rect, const double alpha);
@@ -22,10 +25,10 @@ void DisplayTimeZone(HWND hWnd);
 void UpdateClock(HWND hWnd);
 
 
-
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
+    keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, hInst, 0);
 
-    // Создание класса главного окна
+    // Создание класса главного окна 
     WNDCLASS wc;
     wc.style = NULL;
     wc.lpfnWndProc = MainWindowProcedure;
@@ -60,12 +63,24 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+
+    UnhookWindowsHookEx(keyboardHook);
     return msg.wParam;
 }
 
 
-
-
+LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+     if (nCode >= 0) {
+        if (wParam == WM_KEYDOWN) {
+            KBDLLHOOKSTRUCT* pKeyInfo = (KBDLLHOOKSTRUCT*)(lParam);
+            if (pKeyInfo->vkCode == VK_SPACE) {
+                thread soundThread(PlaySoundAsync, L"audio/kukushka.wav");
+                soundThread.detach();
+            }
+        }
+    }
+    return CallNextHookEx(keyboardHook, nCode, wParam, lParam);
+}
 
 
 // Функция обработки сообщений
@@ -96,31 +111,25 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
     case WM_KEYDOWN:
         switch (wParam) {
         case VK_LEFT:
-            if (utc_offset == -11) {
+            if (utcOffset == -11) {
                 MessageBox(NULL, L"Minimum time zone: UTC-11", L"Warning", MB_ICONWARNING | MB_OK);
             }
             else {
-                utc_offset -= 1;
+                utcOffset -= 1;
                 UpdateClock(hWnd);
             }
             break;
 
         case VK_RIGHT:
-            if (utc_offset == 12) {
+            if (utcOffset == 12) {
                 MessageBox(NULL, L"Maximum time zone: UTC+12", L"Warning", MB_ICONWARNING | MB_OK);
             }
             else {
-                utc_offset += 1;
+                utcOffset += 1;
                 UpdateClock(hWnd);
             }
             break;
-
-        case VK_SPACE:
-            thread soundThread(PlaySoundAsync, L"audio/kukushka.wav");
-            soundThread.detach();
-            break;
         }
-        
         break;
     case WM_DESTROY:
     {
@@ -296,12 +305,12 @@ void DrawClock(HDC hdc, RECT rect, int hour, int minute, int second) {
 void DisplayTimeZone(HWND hWnd) {
 
     wstring new_title = BASE_TITLE;
-    if (utc_offset < 0)
-        new_title += to_wstring(utc_offset);
-    else if (utc_offset > 0)
-        new_title += L"+" + to_wstring(utc_offset);
+    if (utcOffset < 0)
+        new_title += to_wstring(utcOffset);
+    else if (utcOffset > 0)
+        new_title += L"+" + to_wstring(utcOffset);
 
-    new_title += L" | " + TIME_ZONE_MAP[utc_offset];
+    new_title += L" | " + TIME_ZONE_MAP[utcOffset];
     SetWindowText(hWnd, new_title.c_str());
 }
 
@@ -324,7 +333,7 @@ void UpdateClock(HWND hWnd) {
     tm* gmtm = gmtime(&now);
 
     // Отрисовка часов
-    DrawClock(hdc, reduceRect(clientRect, 0.8), gmtm->tm_hour + utc_offset, gmtm->tm_min, gmtm->tm_sec);
+    DrawClock(hdc, reduceRect(clientRect, 0.8), gmtm->tm_hour + utcOffset, gmtm->tm_min, gmtm->tm_sec);
 
     // Вывод пояса в заголовок окна
     DisplayTimeZone(hWnd);
