@@ -276,6 +276,12 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg)
     {
+    case WM_CREATE:
+    {
+        thread soundThread(PlaySoundAsync, L"audio/start-windows.wav");
+        soundThread.detach();
+        break;
+    }
     case WM_SIZE:
     {
         UpdateClock(hWnd);
