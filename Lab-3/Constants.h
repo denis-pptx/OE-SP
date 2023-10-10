@@ -35,5 +35,9 @@ map<int, wstring> TIME_ZONE_MAP = {
 };
 
 LPCSTR timeZoneFileName = "timezone.txt";
-CONST INT timeZonefileSize = 4;
+CONST INT timeZoneFileSize = 4;
+
+
+LPCSTR logFileName = "log.txt";
+CONST INT logFileSize = 1024;
 
