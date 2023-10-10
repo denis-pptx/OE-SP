@@ -30,7 +30,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
     CreateMap();
     MapToMemory();
 
-    utcOffset = *(int*)(pData);
+    memcpy(&utcOffset, pData, 4);
 
     keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, hInst, 0);
   
@@ -125,7 +125,7 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             else {
                 utcOffset -= 1;
                 UpdateClock(hWnd);
-                *(int*)(pData) = utcOffset;
+                memcpy(pData, &utcOffset, 4);
             }
             break;
 
@@ -136,7 +136,7 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             else {
                 utcOffset += 1;
                 UpdateClock(hWnd);
-                *(int*)(pData) = utcOffset;
+                memcpy(pData, &utcOffset, 4);
             }
             break;
         }

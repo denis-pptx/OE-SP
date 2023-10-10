@@ -6,7 +6,7 @@ HANDLE hMapFile;
 LPVOID pData;
 
 LPCSTR fileName = "data.txt";
-CONST INT fileSize = 1;
+CONST INT fileSize = 4;
 
 bool OpenFile() {
     hFile = CreateFileA(fileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
