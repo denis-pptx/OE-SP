@@ -1,34 +1,36 @@
 #pragma once
 #include <Windows.h>
+#include "Constants.h"
 
-HANDLE hFile;
-HANDLE hMapFile;
-LPVOID pData;
+HANDLE hTimeZoneFile;
+HANDLE hTimeZoneMapFile;
+LPVOID pTimeZoneData;
 
-LPCSTR fileName = "data.txt";
-CONST INT fileSize = 4;
 
-bool OpenFile() {
-    hFile = CreateFileA(fileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    return hFile != INVALID_HANDLE_VALUE;
-}
+void InitMapping() {
 
-bool CreateMap() {
-    hMapFile = CreateFileMappingA(hFile, NULL, PAGE_READWRITE, 0, fileSize, NULL);
-    return hMapFile != NULL;
-}
-
-bool MapToMemory() {
-    pData = MapViewOfFile(hMapFile, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, fileSize);
-    if (pData == NULL) {
-        CloseHandle(hMapFile);
-        CloseHandle(hFile);
-        return false;
+    if (hTimeZoneFile = CreateFileA(timeZoneFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL),
+        hTimeZoneFile == INVALID_HANDLE_VALUE) {
+        MessageBox(NULL, L"hTimeZoneFile error", L"Warning", MB_ICONWARNING | MB_OK);
+        return;
     }
-    return true;
+
+    if (hTimeZoneMapFile = CreateFileMappingA(hTimeZoneFile, NULL, PAGE_READWRITE, 0, timeZonefileSize, NULL),
+        hTimeZoneMapFile == NULL) {
+        MessageBox(NULL, L"hTimeZoneMapFile error", L"Warning", MB_ICONWARNING | MB_OK);
+        return;
+    }
+   
+    if (pTimeZoneData = MapViewOfFile(hTimeZoneMapFile, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, timeZonefileSize),
+        pTimeZoneData == NULL) {
+        MessageBox(NULL, L"pTimeZoneData error", L"Warning", MB_ICONWARNING | MB_OK);
+        return;
+    }
 }
 
-void CloseResources() {
-    CloseHandle(hMapFile);
-    CloseHandle(hFile);
+
+void CloseMapping() {
+    UnmapViewOfFile(pTimeZoneData);
+    CloseHandle(hTimeZoneMapFile);
+    CloseHandle(hTimeZoneFile);
 }

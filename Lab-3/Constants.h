@@ -34,4 +34,6 @@ map<int, wstring> TIME_ZONE_MAP = {
        {12, L"Suva"}
 };
 
+LPCSTR timeZoneFileName = "timezone.txt";
+CONST INT timeZonefileSize = 4;
 

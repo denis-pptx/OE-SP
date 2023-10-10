@@ -26,11 +26,9 @@ void UpdateClock(HWND hWnd);
 
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
-    OpenFile();
-    CreateMap();
-    MapToMemory();
+    InitMapping();
 
-    memcpy(&utcOffset, pData, 4);
+    memcpy(&utcOffset, pTimeZoneData, 4);
 
     keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, hInst, 0);
   
@@ -71,7 +69,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
     }
 
     UnhookWindowsHookEx(keyboardHook);
-    CloseResources();
+    CloseMapping();
 
     return msg.wParam;
 }
@@ -125,7 +123,7 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             else {
                 utcOffset -= 1;
                 UpdateClock(hWnd);
-                memcpy(pData, &utcOffset, 4);
+                memcpy(pTimeZoneData, &utcOffset, 4);
             }
             break;
 
@@ -136,7 +134,7 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             else {
                 utcOffset += 1;
                 UpdateClock(hWnd);
-                memcpy(pData, &utcOffset, 4);
+                memcpy(pTimeZoneData, &utcOffset, 4);
             }
             break;
         }
