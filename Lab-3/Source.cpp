@@ -82,6 +82,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
             if (pKeyInfo->vkCode == VK_SPACE) {
                 thread soundThread(PlaySoundAsync, L"audio/kukushka.wav");
                 soundThread.detach();
+                WriteLog("Кукушка");
             }
         }
     }
@@ -124,6 +125,8 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 utcOffset -= 1;
                 UpdateClock(hWnd);
                 memcpy(pTimeZoneData, &utcOffset, 4);
+
+                WriteLog(string("Timezone decreased from UTC") + to_string(utcOffset) + " to UTC" + to_string(utcOffset - 1));
             }
             break;
 
@@ -135,6 +138,8 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 utcOffset += 1;
                 UpdateClock(hWnd);
                 memcpy(pTimeZoneData, &utcOffset, 4);
+                
+                WriteLog(string("Timezone increased from UTC") + to_string(utcOffset - 1) + " to UTC" + to_string(utcOffset));
             }
             break;
         }
@@ -337,7 +342,6 @@ void UpdateClock(HWND hWnd) {
 
     // Текущее UTC время
     time_t now = time(0);
-    tm* localtm = localtime(&now);
     tm* gmtm = gmtime(&now);
 
     // Отрисовка часов

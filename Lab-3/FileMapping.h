@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <Windows.h>
 #include "Constants.h"
 
@@ -53,10 +54,42 @@ void InitMapping() {
     }
 }
 
-
-void WriteLog(LPCSTR str) {
+string NumberToStringWithLeadingZero(int number) {
+    if (number < 10) 
+        return "0" + to_string(number);
+    else 
+        return to_string(number);
     
 }
+
+void WriteLog(string str) {
+    if (pLogData != NULL) {
+
+        // Текущее UTC время
+        time_t now = time(0);
+        tm* gmtm = gmtime(&now);
+
+        str = NumberToStringWithLeadingZero(gmtm->tm_hour) + ":" +
+              NumberToStringWithLeadingZero(gmtm->tm_min) + ":" +
+              NumberToStringWithLeadingZero(gmtm->tm_sec) + " UTC | " +
+              str + "\n";
+
+        // Теущая длина в памяти
+        int currentLength = strlen((char*)pLogData);
+
+        if (currentLength + str.length() > logFileSize) {
+            memset(pLogData, 0, logFileSize);
+            MessageBox(NULL, L"Недостаточно места в файле лога. Файл очищен.", L"Warning", MB_ICONWARNING | MB_OK);
+            currentLength = 0;
+        }
+ 
+        CopyMemory((char*)pLogData + currentLength, str.c_str(), str.length());
+    }
+    else {
+        MessageBox(NULL, L"Память не инициализирована", L"Ошибка", MB_ICONERROR | MB_OK);
+    }
+}
+
 
 void CloseMapping() {
     UnmapViewOfFile(pTimeZoneData);
