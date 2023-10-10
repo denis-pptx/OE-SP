@@ -126,7 +126,9 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 UpdateClock(hWnd);
                 memcpy(pTimeZoneData, &utcOffset, 4);
 
-                WriteLog(string("Timezone decreased from UTC") + to_string(utcOffset) + " to UTC" + to_string(utcOffset - 1));
+                string log = string("Timezone decreased from UTC") + to_string(utcOffset) + " to UTC" + to_string(utcOffset - 1);
+                thread t(WriteLog, log);
+                t.detach();
             }
             break;
 
@@ -139,7 +141,9 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 UpdateClock(hWnd);
                 memcpy(pTimeZoneData, &utcOffset, 4);
                 
-                WriteLog(string("Timezone increased from UTC") + to_string(utcOffset - 1) + " to UTC" + to_string(utcOffset));
+                string log = string("Timezone increased from UTC") + to_string(utcOffset - 1) + " to UTC" + to_string(utcOffset);
+                thread t(WriteLog, log);
+                t.detach();
             }
             break;
         }

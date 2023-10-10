@@ -1,7 +1,10 @@
 #pragma once
 #include <string>
 #include <Windows.h>
+#include <mutex>
 #include "Constants.h"
+
+std::mutex mtx;
 
 HANDLE hTimeZoneFile;
 HANDLE hTimeZoneMapFile;
@@ -63,6 +66,8 @@ string NumberToStringWithLeadingZero(int number) {
 }
 
 void WriteLog(string str) {
+    mtx.lock();
+
     if (pLogData != NULL) {
 
         // Текущее UTC время
@@ -88,6 +93,8 @@ void WriteLog(string str) {
     else {
         MessageBox(NULL, L"Память не инициализирована", L"Ошибка", MB_ICONERROR | MB_OK);
     }
+
+    mtx.unlock();
 }
 
 
