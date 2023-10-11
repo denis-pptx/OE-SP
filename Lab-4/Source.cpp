@@ -1,5 +1,8 @@
 #include <Windows.h>
+#include <cmath>
 
+
+HWND hwnd;
 HWND hwndLeftEdit;
 HWND hwndRightEdit;
 HWND hwndStepEdit;
@@ -15,6 +18,41 @@ const int ID_PROGRESS_LABEL = 104;
 const int ID_LEFT_EDIT = 105;
 const int ID_RIGHT_EDIT = 106;
 const int ID_STEP_EDIT = 107;
+
+
+double leftValue = 0;
+double rightValue = 0;
+double step = 0.0001;
+
+
+bool isCalculating = false;
+bool isCancelRequested = false;
+
+
+DWORD WINAPI CalculateInBackground(LPVOID lpParam) {
+    double result = 0.0;
+    for (double x = leftValue; x <= rightValue; x += step) {
+
+        if (isCancelRequested) {
+            SendMessage(hwnd, WM_USER + 3, 0, 0); 
+            break; 
+        }
+
+        result += step * std::sin(x);
+
+        double progress = ((x - leftValue) / (rightValue - leftValue) * 100);
+        SendMessage(hwnd, WM_USER + 1, *reinterpret_cast<WPARAM*>(&progress), 0);
+    }
+
+    if (isCancelRequested) 
+        isCancelRequested = false;
+    else 
+        SendMessage(hwnd, WM_USER + 2, *reinterpret_cast<WPARAM*>(&result), 0);
+    
+    isCalculating = false;
+
+    return 0;
+}
 
 
 LRESULT CALLBACK MainWindowProcedure(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
