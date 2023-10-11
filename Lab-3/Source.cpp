@@ -27,7 +27,7 @@ void UpdateClock(HWND hWnd);
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
     InitMapping();
-
+    
     memcpy(&utcOffset, pTimeZoneData, 4);
 
     keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, hInst, 0);
