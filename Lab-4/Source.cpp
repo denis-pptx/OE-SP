@@ -112,6 +112,9 @@ LRESULT CALLBACK MainWindowProcedure(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
                     if (leftValue > rightValue) {
                         MessageBox(hwnd, L"Левое значение не может быть больше правого!", L"Предупреждение", MB_ICONWARNING);
                     }
+                    else if (step <= 0) {
+                        MessageBox(hwnd, L"Некорректное значение шага!", L"Предупреждение", MB_ICONWARNING);
+                    }
                     else {
                         isCalculating = true;
                         SetWindowText(hwndResultLabel, L"");
