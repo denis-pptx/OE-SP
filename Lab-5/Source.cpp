@@ -13,7 +13,7 @@
 using namespace std;
 
 
-int utcOffset = 3;
+int utcOffset = DEFAULT_TIMEZONE;
 HHOOK keyboardHook;
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);

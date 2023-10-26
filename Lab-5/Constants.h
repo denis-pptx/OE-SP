@@ -5,6 +5,8 @@
 #include <map>
 using namespace std;
 
+CONST INT DEFAULT_TIMEZONE = 0;
+
 wstring BASE_TITLE = L"Clock | UTC";
 
 map<int, wstring> TIME_ZONE_MAP = {
