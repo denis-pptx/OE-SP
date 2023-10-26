@@ -23,10 +23,10 @@
     <ClInclude Include="Constants.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="FileMapping.h">
+    <ClInclude Include="Registry.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Registry.h">
+    <ClInclude Include="EventLogging.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

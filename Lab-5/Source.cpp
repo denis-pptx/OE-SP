@@ -9,7 +9,7 @@
 
 #include "Registry.h"
 #include "Constants.h"
-#include "FileMapping.h"
+#include "EventLogging.h"
 using namespace std;
 
 
@@ -28,8 +28,6 @@ void UpdateClock(HWND hWnd);
 
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
-    InitMapping();
-    
     utcOffset = LoadTimeZoneFromRegistry();
 
     keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, hInst, 0);
@@ -71,7 +69,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
     }
 
     UnhookWindowsHookEx(keyboardHook);
-    CloseMapping();
 
     return msg.wParam;
 }
@@ -84,7 +81,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
             if (pKeyInfo->vkCode == VK_SPACE) {
                 thread soundThread(PlaySoundAsync, L"audio/kukushka.wav");
                 soundThread.detach();
-                WriteLog("Кукушка");
+                WriteToEventLog(L"Kukushka played");
             }
         }
     }
@@ -100,6 +97,9 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
     {
         thread soundThread(PlaySoundAsync, L"audio/start-windows.wav");
         soundThread.detach();
+
+        WriteToEventLog(L"Application launched");
+
         break;
     }
     case WM_SIZE:
@@ -129,9 +129,8 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 
                 SaveTimeZoneToRegistry(utcOffset);
 
-                string log = string("Timezone decreased from UTC") + to_string(utcOffset) + " to UTC" + to_string(utcOffset - 1);
-                thread t(WriteLog, log);
-                t.detach();
+                wstring log = wstring(L"Timezone decreased from UTC") + to_wstring(utcOffset) + L" to UTC" + to_wstring(utcOffset - 1);
+                WriteToEventLog(log);
             }
             break;
 
@@ -145,15 +144,16 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 
                 SaveTimeZoneToRegistry(utcOffset);
 
-                string log = string("Timezone increased from UTC") + to_string(utcOffset - 1) + " to UTC" + to_string(utcOffset);
-                thread t(WriteLog, log);
-                t.detach();
+                wstring log = wstring(L"Timezone increased from UTC") + to_wstring(utcOffset - 1) + L" to UTC" + to_wstring(utcOffset);
+                WriteToEventLog(log);
             }
             break;
         }
         break;
     case WM_DESTROY:
     {
+        WriteToEventLog(L"Application stopped");
+
         PostQuitMessage(0);
         break;
     }

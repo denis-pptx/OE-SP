@@ -133,7 +133,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Constants.h" />
-    <ClInclude Include="FileMapping.h" />
+    <ClInclude Include="EventLogging.h" />
     <ClInclude Include="Registry.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
