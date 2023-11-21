@@ -1,7 +1,6 @@
 #include <Windows.h>
 #include <string>
 #include <thread>
-#include <iostream> 
 #pragma comment(lib, "ws2_32.lib")
 
 using namespace std;
@@ -18,10 +17,9 @@ void HandleMessages() {
         char buffer[1000];
         int bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
         if (bytesRead <= 0) {
-            // Обработка ошибки при чтении сообщений от сервера или отключения
-            cerr << "Error reading messages or server disconnected." << endl;
+            MessageBox(NULL, L"Error reading messages or server disconnected.", L"Error", MB_OK | MB_ICONERROR);
             closesocket(clientSocket);
-            return;
+            exit(1);
         }
 
         buffer[bytesRead] = '\0';
@@ -33,13 +31,13 @@ void ConnectToServer(const char* serverIP) {
     WSADATA wsaData;
     // Инициализация библиотеки Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        cerr << "Failed to initialize Winsock." << endl;
+        MessageBox(NULL, L"Failed to initialize Winsock.", L"Error", MB_OK | MB_ICONERROR);
         exit(1);
     }
 
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (clientSocket == INVALID_SOCKET) {
-        cerr << "Failed to create socket." << endl;
+        MessageBox(NULL, L"Failed to create socket.", L"Error", MB_OK | MB_ICONERROR);
         WSACleanup();
         exit(1);
     }
@@ -52,7 +50,7 @@ void ConnectToServer(const char* serverIP) {
     serverAddr.sin_addr.s_addr = inet_addr(serverIP);
 
     if (serverAddr.sin_addr.s_addr == INADDR_NONE) {
-        cerr << "Invalid server IP address." << endl;
+        MessageBox(NULL, L"Invalid server IP address.", L"Error", MB_OK | MB_ICONERROR);
         closesocket(clientSocket);
         WSACleanup();
         exit(1);
@@ -60,10 +58,9 @@ void ConnectToServer(const char* serverIP) {
 
     // Подключение к серверу
     if (connect(clientSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-        cerr << "Failed to connect to the server." << endl;
+        MessageBox(NULL, L"Failed to connect to the server.", L"Error", MB_OK | MB_ICONERROR);
         closesocket(clientSocket);
         WSACleanup();
-        MessageBox(NULL, L"Failed to connect to the server.", L"Error", MB_OK | MB_ICONERROR);
         exit(1);
     }
 
@@ -82,10 +79,9 @@ void SendButtonClicked() {
     fullMessage += message;
 
     // Отправка сообщения на сервер
-    if (send(clientSocket, fullMessage.c_str(), fullMessage.size(), 0) == SOCKET_ERROR) {
-        cerr << "Failed to send message to the server." << endl;
-        // Дополнительные действия по обработке ошибки, если необходимо
-    }
+    if (send(clientSocket, fullMessage.c_str(), fullMessage.size(), 0) == SOCKET_ERROR)
+        MessageBox(NULL, L"Failed to send message to the server.", L"Error", MB_OK | MB_ICONERROR);
+    
 }
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -120,7 +116,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         );
         SendMessage(hMessageEdit, EM_LIMITTEXT, 40, 0);
         CreateWindowEx(
-            0, L"BUTTON", L"Отправить", 
+            0, L"BUTTON", L"Send", 
             WS_CHILD | WS_VISIBLE,
             340, 40, 80, 25,
             hwnd, reinterpret_cast<HMENU>(ID_BUTTON_SEND), NULL, NULL);
@@ -134,14 +130,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         );
 
         CreateWindowEx(
-            0, L"BUTTON", L"Очистить",
+            0, L"BUTTON", L"Clear",
             WS_CHILD | WS_VISIBLE,
             340, 280, 80, 25,
             hwnd, reinterpret_cast<HMENU>(ID_BUTTON_CLEAR), NULL, NULL
         );
 
         
-
         // Подключение к серверу
         ConnectToServer("127.0.0.1");
         break;
@@ -191,7 +186,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cmdline, int ss) {
     HWND hWnd = CreateWindow(
         L"MainWindowClass", L"KonchikMessenger",
         WS_OVERLAPPEDWINDOW,
-        0, 0, 450, 450,
+        0, 0, 450, 360,
         NULL, NULL, hInst, NULL
     );
 
