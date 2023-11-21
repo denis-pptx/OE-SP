@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define DEFAULT_PORT 12345
+#define DEFAULT_PORT 11111
 #define ID_BUTTON_SEND 1
 #define ID_BUTTON_CLEAR 2
 

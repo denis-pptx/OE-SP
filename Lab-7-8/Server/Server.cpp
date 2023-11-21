@@ -7,7 +7,7 @@
 
 using namespace std;
 
-#define DEFAULT_PORT 12345
+#define DEFAULT_PORT 11111
 
 vector<SOCKET> clients;
 
