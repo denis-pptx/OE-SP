@@ -128,7 +128,7 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 UpdateClock(hWnd);
                 memcpy(pTimeZoneData, &utcOffset, 4);
 
-                string* log = new string("Timezone decreased from UTC" + to_string(utcOffset) + " to UTC" + to_string(utcOffset - 1));
+                string* log = new string("Timezone decreased from UTC" + to_string(utcOffset + 1) + " to UTC" + to_string(utcOffset));
                 HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)WriteLog, log, 0, NULL);
             }
             break;
