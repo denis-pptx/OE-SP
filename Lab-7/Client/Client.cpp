@@ -8,6 +8,7 @@ using namespace std;
 
 #define DEFAULT_PORT 12345
 #define ID_BUTTON_SEND 1
+#define ID_BUTTON_CLEAR 2
 
 HWND hNameEdit, hMessageEdit, hListBox;
 SOCKET clientSocket;
@@ -128,10 +129,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         hListBox = CreateWindowEx(
             0, L"LISTBOX", NULL,
             WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL,
-            10, 70, 410, 200,
+            10, 70, 410, 205,
             hwnd, NULL, NULL, NULL
         );
 
+        CreateWindowEx(
+            0, L"BUTTON", L"Очистить",
+            WS_CHILD | WS_VISIBLE,
+            340, 280, 80, 25,
+            hwnd, reinterpret_cast<HMENU>(ID_BUTTON_CLEAR), NULL, NULL
+        );
 
         
 
@@ -140,8 +147,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         break;
 
     case WM_COMMAND:
-        if (LOWORD(wParam) == 1 && HIWORD(wParam) == BN_CLICKED) {
+        if (LOWORD(wParam) == ID_BUTTON_SEND && HIWORD(wParam) == BN_CLICKED) {
             SendButtonClicked();
+        }
+        else if (LOWORD(wParam) == ID_BUTTON_CLEAR && HIWORD(wParam) == BN_CLICKED) {
+            SendMessage(hListBox, LB_RESETCONTENT, 0, 0);
         }
         break;
 
