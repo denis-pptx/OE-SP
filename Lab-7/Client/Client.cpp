@@ -16,6 +16,7 @@ void HandleMessages() {
     while (true) {
         char buffer[1000];
         int bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+
         if (bytesRead <= 0) {
             MessageBox(NULL, L"Error reading messages or server disconnected.", L"Error", MB_OK | MB_ICONERROR);
             closesocket(clientSocket);
@@ -35,6 +36,7 @@ void ConnectToServer(const char* serverIP) {
         exit(1);
     }
 
+    // Создание сокета
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (clientSocket == INVALID_SOCKET) {
         MessageBox(NULL, L"Failed to create socket.", L"Error", MB_OK | MB_ICONERROR);
@@ -42,13 +44,13 @@ void ConnectToServer(const char* serverIP) {
         exit(1);
     }
 
+    // Настройка параметров сервера
     sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = inet_addr(serverIP); // Преобразование IP-адреса из строки
     serverAddr.sin_port = htons(DEFAULT_PORT);
 
-    // Преобразование IP-адреса из строки
-    serverAddr.sin_addr.s_addr = inet_addr(serverIP);
-
+    
     if (serverAddr.sin_addr.s_addr == INADDR_NONE) {
         MessageBox(NULL, L"Invalid server IP address.", L"Error", MB_OK | MB_ICONERROR);
         closesocket(clientSocket);
@@ -144,6 +146,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     case WM_COMMAND:
         if (LOWORD(wParam) == ID_BUTTON_SEND && HIWORD(wParam) == BN_CLICKED) {
             SendButtonClicked();
+            SetWindowTextA(hMessageEdit, "");
         }
         else if (LOWORD(wParam) == ID_BUTTON_CLEAR && HIWORD(wParam) == BN_CLICKED) {
             SendMessage(hListBox, LB_RESETCONTENT, 0, 0);
