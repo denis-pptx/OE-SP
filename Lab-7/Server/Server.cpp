@@ -1,88 +1,124 @@
-﻿#include <iostream>
-#include <winsock2.h>
+﻿#include <WinSock2.h>
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <string>
 
-#pragma comment(lib, "ws2_32.lib") // Линковка с библиотекой для работы с Winsock
+#pragma comment(lib, "ws2_32.lib")
 
-#define PORT 12345
-#define MAX_BUFFER_SIZE 1024
+using namespace std;
+
+#define DEFAULT_PORT 12345
+
+vector<SOCKET> clients;
+
+int getUniqueNumber() {
+    static int number = 1;
+    return number++;
+}
+
+// Обработка сообщений от клиента
+void HandleClient(const SOCKET& clientSocket) {
+    int clientNumber = getUniqueNumber();
+
+    cout << "Client #" << clientNumber << " connected." << endl;
+    cout << "Total clients: " << clients.size() << endl;
+
+    while (true) {
+
+        char buffer[1000];
+        int bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+
+        if (bytesRead <= 0) {
+            cout << "Client #" << clientNumber << " disconnected.\n";
+
+            // Удалить сокет из вектора
+            auto it = find(clients.begin(), clients.end(), clientSocket);
+            if (it != clients.end()) 
+                clients.erase(it);
+            
+            // Закрыть сокет
+            closesocket(clientSocket);
+
+            return;
+        }
+
+        buffer[bytesRead] = '\0';
+        cout << "Message from client #" << clientNumber << ": " << buffer << endl;
+
+        // Рассылка сообщения всем клиентам
+        for (size_t i = 0; i < clients.size(); i++) {
+            const SOCKET& otherClient = clients[i];
+
+            int bytesSent = send(otherClient, buffer, bytesRead, 0);
+
+            if (bytesSent == SOCKET_ERROR) 
+                cout << "Error sending message to client #" << i << ".\n";
+        }
+
+    }
+}
+
 
 int main() {
     setlocale(LC_ALL, "Ru");
-    // Инициализация Winsock
+
     WSADATA wsaData;
+    // Инициализация библиотеки Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "Ошибка при инициализации Winsock.\n";
+        cout << "Failed to initialize Winsock." << endl;
         return 1;
     }
 
     // Создание сокета
-    SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket == INVALID_SOCKET) {
-        std::cerr << "Ошибка при создании сокета.\n";
+    SOCKET listenSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (listenSocket == INVALID_SOCKET) {
+        cout << "Failed to create socket." << endl;
         WSACleanup();
         return 1;
     }
+
+    // Настройка параметров сервера
+    sockaddr_in serverAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    serverAddr.sin_port = htons(DEFAULT_PORT);
 
     // Привязка сокета
-    sockaddr_in serverAddress;
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_addr.s_addr = INADDR_ANY;
-    serverAddress.sin_port = htons(PORT);
-
-    if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR) {
-        std::cerr << "Ошибка при привязке сокета.\n";
-        closesocket(serverSocket);
+    if (bind(listenSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
+        cout << "Failed to bind socket." << endl;
+        closesocket(listenSocket);
         WSACleanup();
         return 1;
     }
 
-    // Ожидание входящих подключений
-    if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
-        std::cerr << "Ошибка при прослушивании сокета.\n";
-        closesocket(serverSocket);
+    // Ожидание подключений
+    if (listen(listenSocket, SOMAXCONN) == SOCKET_ERROR) {
+        cout << "Error while listening for connections." << endl;
+        closesocket(listenSocket);
         WSACleanup();
         return 1;
     }
 
-    std::cout << "Сервер слушает порт " << PORT << "...\n";
-
-    // Принятие подключений от клиентов
-    SOCKET clientSocket;
-    sockaddr_in clientAddress;
-    int clientAddressSize = sizeof(clientAddress);
+    cout << "Server started. Listening on port " << DEFAULT_PORT << endl;
 
     while (true) {
-        clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientAddressSize);
+        // Принятие подключения
+        SOCKET clientSocket = accept(listenSocket, NULL, NULL);
         if (clientSocket == INVALID_SOCKET) {
-            std::cerr << "Ошибка при принятии подключения клиента.\n";
-            closesocket(serverSocket);
-            WSACleanup();
-            return 1;
+            cout << "Failed to accept client connection." << endl;
+            continue;
         }
 
-        std::cout << "Клиент подключен.\n";
+        // Добавление клиента в вектор
+        clients.push_back(clientSocket);
 
-        // Обработка обмена сообщениями с клиентом
-        char buffer[MAX_BUFFER_SIZE];
-        int bytesRead;
-
-        do {
-            bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
-            if (bytesRead > 0) {
-                buffer[bytesRead] = '\0'; // Добавляем нулевой символ в конец строки
-                std::cout << "Получено от клиента: " << buffer << std::endl;
-
-                // Реализуйте код для отправки ответа обратно клиенту
-                send(clientSocket, buffer, bytesRead, 0);
-            }
-        } while (bytesRead > 0);
-
-        std::cout << "Клиент отключен.\n";
-        closesocket(clientSocket);
+        // Создание нового потока для обработки клиента
+        thread(HandleClient, clientSocket).detach();
     }
 
-    // Очистка ресурсов
-    closesocket(serverSocket);
+    // Закрытие сокета и очистка Winsock
+    closesocket(listenSocket);
     WSACleanup();
 
     return 0;
