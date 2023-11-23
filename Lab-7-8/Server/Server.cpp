@@ -1,4 +1,6 @@
-﻿#include <WinSock2.h>
+﻿#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
+#include <WinSock2.h>
 #include <iostream>
 #include <vector>
 #include <thread>
@@ -8,6 +10,7 @@
 using namespace std;
 
 #define DEFAULT_PORT 11111
+#define DEFAULT_IP "127.0.0.1"
 
 vector<SOCKET> clients;
 
@@ -80,7 +83,7 @@ int main() {
     // Настройка параметров сервера
     sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    serverAddr.sin_addr.s_addr = inet_addr(DEFAULT_IP);
     serverAddr.sin_port = htons(DEFAULT_PORT);
 
     // Привязка сокета
@@ -91,7 +94,7 @@ int main() {
         return 1;
     }
 
-    // Ожидание подключений
+    // Перевод сокета в режим ожидания входящих соединений
     if (listen(listenSocket, SOMAXCONN) == SOCKET_ERROR) {
         cout << "Error while listening for connections." << endl;
         closesocket(listenSocket);

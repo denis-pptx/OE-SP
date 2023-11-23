@@ -6,6 +6,7 @@
 using namespace std;
 
 #define DEFAULT_PORT 11111
+#define DEFAULT_IP "127.0.0.1"
 #define ID_BUTTON_SEND 1
 #define ID_BUTTON_CLEAR 2
 
@@ -28,7 +29,7 @@ void HandleMessages() {
     }
 }
 
-void ConnectToServer(const char* serverIP) {
+void ConnectToServer() {
     WSADATA wsaData;
     // Инициализация библиотеки Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -47,8 +48,8 @@ void ConnectToServer(const char* serverIP) {
     // Настройка параметров сервера
     sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = inet_addr(serverIP); // Преобразование IP-адреса из строки
-    serverAddr.sin_port = htons(DEFAULT_PORT);
+    serverAddr.sin_addr.s_addr = inet_addr(DEFAULT_IP); // Преобразование IP-адреса из строки
+    serverAddr.sin_port = htons(DEFAULT_PORT); // host to network short
 
     
     if (serverAddr.sin_addr.s_addr == INADDR_NONE) {
@@ -140,7 +141,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
         
         // Подключение к серверу
-        ConnectToServer("127.0.0.1");
+        ConnectToServer();
         break;
 
     case WM_COMMAND:
